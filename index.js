@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 
 const app = express();
@@ -15,16 +15,26 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 // mongo operations
 
-const runMongoOperation = async () =>{
-    try{
+const runMongoOperation = async () => {
+    try {
         const userCollections = client.db("laptopCollections").collection("users")
 
-        app.post("/users",(req, res) =>{
+        app.post("/users", async (req, res) => {
             const users = req.body
-            console.log(users)
+            const result = await userCollections.insertOne(users)
+            res.send(result)
+        })
+
+        app.get("/users/admin/:email", async (req, res) => {
+            const email = req.params.email
+            const query = { email }
+            const user = await userCollections.findOne(query)
+            res.send({ isAdmin: user?.role === 'admin' })
         })
     }
-    finally{}
+    finally {
+
+    }
 }
 runMongoOperation().catch(err => console.error(err))
 
@@ -33,6 +43,6 @@ app.get('/', (req, res) => {
 
 })
 
-app.listen(5000, ()=>{
+app.listen(5000, () => {
     console.log('listening on port 5000');
 })

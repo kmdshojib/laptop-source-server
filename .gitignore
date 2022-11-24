@@ -1,3 +1,9 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+
 .vercel
 # production
 /build

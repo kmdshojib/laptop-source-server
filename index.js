@@ -24,19 +24,29 @@ const runMongoOperation = async () => {
             const result = await userCollections.insertOne(users)
             res.send(result)
         })
-
+        // user role
         app.get("/users/admin/:email", async (req, res) => {
             const email = req.params.email
             const query = { email }
             const user = await userCollections.findOne(query)
             res.send({ isAdmin: user?.role === 'admin' })
         })
+        app.get("/users/seller/:email", async (req, res) => {
+            const email = req.params.email
+            const query = { email }
+            const user = await userCollections.findOne(query)
+            res.send({ isSeller: user?.role === 'seller' })
+        })
 
         // getting all users
         app.get("/users/buyers", async (req, res) => {
             const query = {role:"buyer"}
             const result = await userCollections.find(query).toArray()
-            console.log(result)
+            res.send(result)
+        })
+        app.get("/users/sellers", async (req, res) => {
+            const query = {role:"seller"}
+            const result = await userCollections.find(query).toArray()
             res.send(result)
         })
     }

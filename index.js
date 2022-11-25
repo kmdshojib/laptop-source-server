@@ -31,6 +31,14 @@ const runMongoOperation = async () => {
             const user = await userCollections.findOne(query)
             res.send({ isAdmin: user?.role === 'admin' })
         })
+
+        // getting all users
+        app.get("/users/buyers", async (req, res) => {
+            const query = {role:"buyer"}
+            const result = await userCollections.find(query).toArray()
+            console.log(result)
+            res.send(result)
+        })
     }
     finally {
 

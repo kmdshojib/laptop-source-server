@@ -34,13 +34,13 @@ const runMongoOperation = async () => {
         })
         app.get("/myproducts/:email", async (req, res) => {
             const email = req.params.email
-            const query = {email}
+            const query = { email }
             const result = await productCollections.find(query).toArray()
             res.send(result)
         })
         app.get("/product/:category", async (req, res) => {
             const category = req.params.category
-            const query = {category}
+            const query = { category }
             const result = await productCollections.find(query).toArray()
             res.send(result)
         })
@@ -58,7 +58,7 @@ const runMongoOperation = async () => {
             const user = await userCollections.findOne(query)
             res.send({ isSeller: user?.role === 'seller' })
         })
-        app.get("/seller/:email",async(req,res)=>{
+        app.get("/seller/:email", async (req, res) => {
             const email = req.params.email
             const query = { email }
             const seller = await userCollections.findOne(query)
@@ -76,26 +76,37 @@ const runMongoOperation = async () => {
             res.send(result)
         })
         // delete
-        app.delete("/user/:id", async (req, res) => {
-            const id = req.params.id
-            const query = { _id: ObjectId(id) }
+        app.delete("/user/:email", async (req, res) => {
+            const email = req.params.email
+            const query = {email}
             const result = await userCollections.deleteOne(query)
             res.send(result)
         })
         // posting data
-        app.put("/user/:id", async (req, res) => {
-            const id = req.params.id
+        app.put("/user/:email", async (req, res) => {
+            const email = req.params.email
             const options = { upsert: true }
-            const query = { _id: ObjectId(id) }
+            const query = { email }
             const verified = req.body
             const updatedDoc = {
                 $set: verified
             }
-            const result = await userCollections.updateOne(query,updatedDoc,options)
+            const result = await userCollections.updateOne(query, updatedDoc, options)
+            res.send(result)
+        })
+        app.put("/verifcation/:email", async (req, res) => {
+            const email = req.params.email
+            const options = { upsert: true }
+            const query = { email }
+            const verified = req.body
+            const updatedDoc = {
+                $set: verified
+            }
+            const result = await productCollections.updateOne(query, updatedDoc, options)
             res.send(result)
         })
 
-        app.post("/products", async (req, res)=>{
+        app.post("/products", async (req, res) => {
             const products = req.body
             const result = await productCollections.insertOne(products)
             res.send(result)

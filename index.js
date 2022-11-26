@@ -26,6 +26,24 @@ const runMongoOperation = async () => {
             const result = await userCollections.insertOne(users)
             res.send(result)
         })
+        // get categories
+        app.get("/categories", async (req, res) => {
+            const query = {}
+            const result = await categoryCollections.find(query).toArray()
+            res.send(result)
+        })
+        app.get("/myproducts/:email", async (req, res) => {
+            const email = req.params.email
+            const query = {email}
+            const result = await productCollections.find(query).toArray()
+            res.send(result)
+        })
+        app.get("/product/:category", async (req, res) => {
+            const category = req.params.category
+            const query = {category}
+            const result = await productCollections.find(query).toArray()
+            res.send(result)
+        })
         // user role
         app.get("/users/admin/:email", async (req, res) => {
             const email = req.params.email
@@ -82,24 +100,6 @@ const runMongoOperation = async () => {
             const result = await productCollections.insertOne(products)
             res.send(result)
         })
-
-        const catagories = [
-            {
-                catagoryName: "Business",
-                image:"https://i.dell.com/is/image/DellContent//content/dam/ss2/product-images/dell-client-products/notebooks/latitude-notebooks/15-3520/global-spi/ng/notebook-latitude-15-3520-campaign-hero-504x350-ng.psd?fmt=jpg&wid=570&hei=400",
-                description: "You will find all the Business category laptops available here."
-            },
-            {
-                catagoryName: "Gaming",
-                image:"https://assets2.razerzone.com/images/pnx.assets/e69b14d8b16a77ad61a59359a7275694/new-razer-blade-15-2022-nvidia-mobile.jpg",
-                description: "You will find all the Gaming laptops available here."
-            },
-            {
-                catagoryName: "Gaming",
-                image:"https://www.apple.com/v/macbook-pro-14-and-16/c/images/meta/macbook-pro-14-and-16_overview__fz0lron5xyuu_og.png",
-                description: "You will find all the Apple laptops available here."
-            }
-        ]
     }
     finally {
 

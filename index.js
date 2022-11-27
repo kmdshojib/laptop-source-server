@@ -20,10 +20,39 @@ const runMongoOperation = async () => {
         const userCollections = client.db("laptopCollections").collection("users")
         const productCollections = client.db("laptopCollections").collection("products")
         const categoryCollections = client.db("laptopCollections").collection("category")
+        const ordersCollections = client.db("laptopCollections").collection("orders")
 
+
+        app.put("/productCollections/:id", async (req, res) => {
+            const id = req.params.id
+            const options = { upsert: true }
+            const query = { _id: ObjectId(id) }
+            const advertised = req.body
+            const updatedDoc = {
+                $set: advertised
+            }
+            const result = await productCollections.updateOne(query, updatedDoc, options)
+            res.send(result)
+        })
+        app.get("/products", async (req, res) => {
+            const query = {  }
+            const result = await productCollections.find(query).toArray()
+            res.send(result)
+        })
+        app.delete("/products/:id", async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await productCollections.deleteOne(query)
+            res.send(result)
+        })
         app.post("/users", async (req, res) => {
             const users = req.body
             const result = await userCollections.insertOne(users)
+            res.send(result)
+        })
+        app.post("/orders", async (req, res) => {
+            const orders = req.body
+            const result = await ordersCollections.insertOne(orders)
             res.send(result)
         })
         // get categories
@@ -42,6 +71,12 @@ const runMongoOperation = async () => {
             const category = req.params.category
             const query = { category }
             const result = await productCollections.find(query).toArray()
+            res.send(result)
+        })
+        app.get("/products/:id", async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await productCollections.findOne(query)
             res.send(result)
         })
         // user role
@@ -78,7 +113,7 @@ const runMongoOperation = async () => {
         // delete
         app.delete("/user/:email", async (req, res) => {
             const email = req.params.email
-            const query = {email}
+            const query = { email }
             const result = await userCollections.deleteOne(query)
             res.send(result)
         })

@@ -22,6 +22,13 @@ const runMongoOperation = async () => {
         const categoryCollections = client.db("laptopCollections").collection("category")
         const ordersCollections = client.db("laptopCollections").collection("orders")
 
+        app.get("/myorders/:email", async (req, res) => {
+            const email = req.params?.email
+            const query = { buyerEmail:email }
+            const result = await ordersCollections.find(query).toArray()
+            console.log(result)
+            res.send(result)
+        })
 
         app.put("/productCollections/:id", async (req, res) => {
             const id = req.params.id
@@ -35,7 +42,7 @@ const runMongoOperation = async () => {
             res.send(result)
         })
         app.get("/products", async (req, res) => {
-            const query = {  }
+            const query = {}
             const result = await productCollections.find(query).toArray()
             res.send(result)
         })

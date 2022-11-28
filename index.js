@@ -34,7 +34,6 @@ function verifyJWT(req, res, next) {
 
 }
 
-
 // mongo operations
 
 const runMongoOperation = async () => {
@@ -90,6 +89,13 @@ const runMongoOperation = async () => {
             const id = req.params.id
             const query = { _id: ObjectId(id) }
             const result = await productCollections.deleteOne(query)
+            console.log(result)
+            res.send(result)
+        })
+        app.delete("/orders/:id", async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await ordersCollections.deleteOne(query)
             console.log(result)
             res.send(result)
         })

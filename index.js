@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_SC)
+const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -13,6 +15,26 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASS}@cluster0.ygyoxnw.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next) {
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send('unauthorized access');
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    })
+
+}
+
+
 // mongo operations
 
 const runMongoOperation = async () => {
@@ -21,11 +43,82 @@ const runMongoOperation = async () => {
         const productCollections = client.db("laptopCollections").collection("products")
         const categoryCollections = client.db("laptopCollections").collection("category")
         const ordersCollections = client.db("laptopCollections").collection("orders")
+        const paymentCollections = client.db("laptopCollections").collection("payments")
+        const reportCollections = client.db("laptopCollections").collection("reports")
+
+        // Report to admin
+        app.post("/reports",async(req,res)=>{
+            const report = req.body
+            const result = await reportCollections.insertOne(report)
+            res.send(result)
+        })
+
+        app.get("/reports",async(req,res)=>{
+            const result = await reportCollections.find({}).toArray()
+            res.send(result)
+        })
+
+        // verify jwt
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await userCollections.findOne(query);
+            if (user) {
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN)
+                return res.send({ accessToken: token });
+            }
+            res.status(403).send({ accessToken: '' })
+        });
+
+
+        app.post("/payments", async (req, res) => {
+            const payment = req.body
+            const result = await paymentCollections.insertOne(payment)
+            const id = payment.productId
+            const filtered = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    trxId: payment.trxId,
+                }
+            }
+            const updatedResult = await ordersCollections.updateOne(filtered, updatedDoc)
+            res.send(result)
+        })
+        
+        app.delete("/products/:id", async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await productCollections.deleteOne(query)
+            console.log(result)
+            res.send(result)
+        })
+        app.post("/create-payment-intent", async (req, res) => {
+            const Productdata = req.body
+            const price = Productdata.productPrice
+            const ammount = price * 100
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: "usd",
+                amount: ammount,
+                "payment_method_types": [
+                    "card"
+                ]
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
 
         app.get("/myorders/:email", async (req, res) => {
             const email = req.params?.email
-            const query = { buyerEmail:email }
+            const query = { buyerEmail: email }
             const result = await ordersCollections.find(query).toArray()
+            res.send(result)
+        })
+        app.get("/payment/:id", async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await ordersCollections.findOne(query)
             console.log(result)
             res.send(result)
         })
@@ -46,6 +139,19 @@ const runMongoOperation = async () => {
             const result = await productCollections.find(query).toArray()
             res.send(result)
         })
+        app.put("/products/:id", async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const options = { upsert: true }
+            const booked = req.body
+            const updatedDoc = {
+                $set: booked
+            }
+            const result = await productCollections.updateOne(query, updatedDoc, options)
+            console.log(result)
+            res.send(result)
+        })
+
         app.delete("/products/:id", async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) }
@@ -62,6 +168,7 @@ const runMongoOperation = async () => {
             const result = await ordersCollections.insertOne(orders)
             res.send(result)
         })
+
         // get categories
         app.get("/categories", async (req, res) => {
             const query = {}
